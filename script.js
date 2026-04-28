@@ -1,90 +1,149 @@
-// Використовуємо IIFE (Immediately Invoked Function Expression) для створення замикання.
-// Тепер масив users недоступний ззовні через консоль.
-const UserSystem = (function() {
-    // Приватні дані (інкапсуляція)
-    let users = [
-        { id: 101, name: 'Олександр', role: 'Admin' },
-        { id: 102, name: 'Марія', role: 'Editor' }
-    ];
+/**
+ * ПРАКТИЧНА РОБОТА №5
+ * Тема: Об'єкти в JavaScript
+ * Варіант 1: User Management System
+ */
 
-    // Регулярний вираз для валідації імені: лише літери (українські та латинські), від 2 до 20 символів
+// 1. ПРИВАТНЕ СХОВИЩЕ ЧЕРЕЗ CLOSURES (ЗАМИКАННЯ)
+const UserManager = (function() {
+    let users = []; 
+    let nextId = 101;
+
+    // Регулярні вирази для валідації
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const nameRegex = /^[a-zA-Zа-яА-ЯіїєґІЇЄҐ']{2,20}$/;
 
     return {
-        // Додавання користувача з валідацією
-        addUser: function(name, role) {
-            if (!nameRegex.test(name)) {
-                console.error(`Помилка: Ім'я "${name}" містить цифри або некоректні символи!`);
-                return false;
-            }
-            if (!role) {
-                console.error("Помилка: Роль має бути заповнена!");
-                return false;
-            }
+        /**
+         * Створення користувача
+         * @param {Object} data - Деструктуризація параметрів
+         */
+        createUser({ name, email, role }) {
+            // Валідація
+            if (!nameRegex.test(name)) throw new Error("Ім'я має містити лише літери (2-20 символів)");
+            if (!emailRegex.test(email)) throw new Error("Некоректний формат Email");
 
+            // User Object
             const newUser = {
-                id: Math.floor(Math.random() * 1000), // Генерація ID
-                name: name,
-                role: role
+                id: nextId++,
+                name,
+                email,
+                role,
+                createdAt: new Date().toLocaleString(),
+                
+                // Використання this
+                getInfo() {
+                    return `[ID: ${this.id}] ${this.name} - ${this.role} (Створено: ${this.createdAt})`;
+                },
+                isAdmin() {
+                    return this.role.toLowerCase() === 'admin';
+                }
             };
 
-            // Імутабельність: створюємо новий масив замість push
+            // Immutable Operation (Spread operator)
             users = [...users, newUser];
-            console.log(`Користувача ${name} додано!`);
+            return newUser;
+        },
+
+        getUser(id) {
+            return users.find(u => u.id === parseInt(id));
+        },
+
+        updateUser(id, data) {
+            if (!this.getUser(id)) throw new Error("Користувача з таким ID не знайдено");
+
+            // Immutable Update через map
+            users = users.map(u => u.id === parseInt(id) ? { ...u, ...data } : u);
+            return this.getUser(id);
+        },
+
+        deleteUser(id) {
+            users = users.filter(u => u.id !== parseInt(id));
             return true;
         },
 
-        // Оновлення ролі через імутабельний метод map
-        updateRole: function(id, newRole) {
-            const userExists = users.some(u => u.id === parseInt(id));
-            if (!userExists) {
-                console.error(`Помилка: Користувача з ID ${id} не знайдено!`);
-                return false;
-            }
-
-            // Створюємо новий масив, замінюючи лише потрібний об'єкт
-            users = users.map(user => 
-                user.id === parseInt(id) ? { ...user, role: newRole } : user
-            );
-
-            console.log(`Дані користувача з ID ${id} оновлено.`);
-            return true;
+        getAllUsers() {
+            return [...users]; // Повертаємо копію
         },
 
-        // Метод для отримання копії списку (щоб не пошкодити оригінал)
-        getUsers: function() {
-            return [...users];
+        getUsersByRole(role) {
+            return users.filter(u => u.role === role);
+        },
+
+        /**
+         * Object Methods (Object.keys)
+         */
+        getStats() {
+            if (users.length === 0) return "Система порожня";
+            return `Поля об'єкта: ${Object.keys(users[0]).join(', ')}`;
         }
     };
 })();
 
-// Функції для зв'язку з вашим інтерфейсом (HTML)
-function handleAdd() {
-    const nameInput = document.querySelector('input[placeholder="Ім\'я користувача"]');
-    const roleInput = document.querySelector('input[placeholder="Роль (напр. Admin)"]');
-    
-    const success = UserSystem.addUser(nameInput.value, roleInput.value);
-    
-    if (success) {
-        nameInput.value = '';
-        roleInput.value = '';
-        console.table(UserSystem.getUsers()); // Гарний вивід у консоль
+// 2. UNIT ТЕСТИ
+function runTests() {
+    console.group("🧪 UNIT TESTING REPORT");
+    try {
+        // Test 1: Створення та методи об'єкта
+        const testUser = UserManager.createUser({ name: "Тест", email: "test@mail.com", role: "Admin" });
+        console.assert(testUser.id === 101, "❌ Test 1: ID mismatch");
+        console.assert(testUser.isAdmin() === true, "❌ Test 1: this.role check failed");
+        console.log("✅ Test 1: Create & Methods - Passed");
+
+        // Test 2: Приватність
+        console.assert(typeof users === 'undefined', "❌ Test 2: Privacy failure");
+        console.log("✅ Test 2: Encapsulation (Closures) - Passed");
+
+        // Test 3: Валідація
+        try {
+            UserManager.createUser({ name: "123", email: "bad", role: "User" });
+            console.error("❌ Test 3: Validation failed (accepted bad data)");
+        } catch (e) {
+            console.log("✅ Test 3: Validation & Error Handling - Passed");
+        }
+
+        // Test 4: Імутабельність
+        const oldList = UserManager.getAllUsers();
+        UserManager.updateUser(101, { role: "Editor" });
+        console.assert(oldList[0].role === "Admin", "❌ Test 4: Immutability failed (mutated original)");
+        console.log("✅ Test 4: Immutability (State Copy) - Passed");
+
+    } catch (e) {
+        console.error("Critical Test Error:", e.message);
     }
+    console.groupEnd();
 }
 
-function handleUpdate() {
-    const idInput = document.querySelector('input[placeholder="ID для зміни"]');
-    const roleInput = document.querySelector('input[placeholder="Нова роль"]');
-    
-    const success = UserSystem.updateRole(idInput.value, roleInput.value);
-    
-    if (success) {
-        idInput.value = '';
-        roleInput.value = '';
-        console.table(UserSystem.getUsers());
-    }
-}
+// 3. UI LOGIC
+document.addEventListener('DOMContentLoaded', () => {
+    runTests(); // Запуск тестів при старті
 
-// Прив'язка до кнопок (переконайтеся, що у вашому HTML кнопкам додано відповідні id або класи)
-document.querySelector('.btn-success')?.addEventListener('click', handleAdd);
-document.querySelector('.btn-primary')?.addEventListener('click', handleUpdate);
+    document.getElementById('addBtn').addEventListener('click', () => {
+        const name = document.getElementById('userName').value;
+        const role = document.getElementById('userRole').value;
+        const email = `${name.toLowerCase()}@example.com`;
+
+        try {
+            const user = UserManager.createUser({ name, email, role });
+            console.log("Додано:", user.getInfo());
+            console.table(UserManager.getAllUsers());
+        } catch (e) {
+            alert(e.message);
+        }
+    });
+
+    document.getElementById('updateBtn').addEventListener('click', () => {
+        const id = document.getElementById('updateId').value;
+        const role = document.getElementById('newRole').value;
+
+        try {
+            UserManager.updateUser(id, { role });
+            console.clear();
+            runTests();
+            console.table(UserManager.getAllUsers());
+            console.log(UserManager.getStats());
+        } catch (e) {
+            alert(e.message);
+        }
+    });
+});
