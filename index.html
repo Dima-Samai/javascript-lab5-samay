@@ -2,60 +2,34 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Практична №5: User Management System</title>
+    <title>User Management System</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f4f7f6;
-            margin: 0;
-        }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 500px;
-        }
-        h1 { color: #2c3e50; margin-bottom: 10px; }
-        p { color: #576574; line-height: 1.6; }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            background: #27ae60;
-            color: white;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            margin-top: 15px;
-        }
-        .footer-note {
-            margin-top: 25px;
-            font-size: 0.85rem;
-            color: #95a5a6;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
-        }
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .controls { background: #f4f4f4; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        input { padding: 8px; margin-right: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #218838; }
+        .info { color: #666; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>User Management System</h1>
-        <p>Практична робота №5</p>
-        <p><strong>Студент:</strong> Дмитро Самай, група 44</p>
-        
-        <div class="status-badge">Система активна</div>
-
-        <div class="footer-note">
-            Відкрийте <strong>Консоль (F12)</strong>, щоб побачити роботу методів та результати Unit-тестів.
-        </div>
+    <h2>Керування користувачами</h2>
+    
+    <div class="controls">
+        <input type="text" id="userName" placeholder="Ім'я користувача">
+        <input type="text" id="userRole" placeholder="Роль (напр. Admin)">
+        <button onclick="handleCreate()">Додати</button>
     </div>
 
-    <script src="index.js"></script>
+    <div class="controls" style="background: #e9ecef;">
+        <input type="number" id="updateId" placeholder="ID для зміни">
+        <input type="text" id="newRole" placeholder="Нова роль">
+        <button onclick="handleUpdate()" style="background: #007bff;">Оновити роль</button>
+    </div>
+
+    <p class="info">Результати дій відображаються у <b>консолі браузера (F12)</b></p>
+
+    <script src="script.js"></script>
 </body>
 </html>
